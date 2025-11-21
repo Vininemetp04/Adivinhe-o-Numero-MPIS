@@ -12,28 +12,34 @@
 	msg:    .asciiz "Voce tem 10 tentativas para adivinhar o numero\n"
 	maior:  .asciiz "Voce chutou um numero maior!!!\n"
 	menor:  .asciiz "Voce chutou um numero menor!!!\n"
-    venceu: .asciiz "Voce VENCEU!!!"
-    perdeu: .asciiz "Acabaram suas chances :("
+    venceu: .asciiz "Voce VENCEU!!!\n"
+    perdeu: .asciiz "Acabaram suas chances :(\n"
 	chute:  .asciiz "Qual e o seu chute: "
 	max:    .byte   10
+    menu_1: .asciiz "=-=-=-=-=| MENU |=-=-=-=-=\n"
+    menu_2: .asciiz "Maior pontuação: "
+    menu_3: .asciiz "1 - Jogar\n"
+    menu_4: .asciiz "0 - Sair\n"
+    menu_5: .asciiz "Sua opção: "
+    menu_0: .asciiz "-\n"
+    menu_n: .asciiz "\n"
 
 .text
 .globl main
 
 main:
-	# Randomiza um número 
-	li $v0, 42 	# Chamada de sistema para randomizar inteiros
-	li $a1, 21	# Limite para o randomizador.
-	syscall     # GALINHAAAAA
-	move $t9, $a0 # Move o numero rand. para o t9
-	
-	# Imprime mgs na tela
-	li $v0, 4
-	la $a0, msg
-	syscall
+    li $t5, 0 # Inicia a melhor pontuação com 0.
+    j menu
 
-    # Inicia as tentativas com 0 chutes 
-    li $t7, 0
+rand_num:
+    # Randomiza um número 
+	li $v0, 42 	  # Chamada de sistema para randomizar inteiros
+	li $a1, 21	  # Limite para o randomizador.
+	syscall       # GALINHAAAAA
+	move $t9, $a0 # Move o numero rand. para o t9
+    
+    # Volta para onde chamou
+    jr $ra
 
 loop:
     lb $t8, max # Coloca o MAX de tentativa no t8
@@ -62,8 +68,8 @@ perdeu_bl:
     la $a0, perdeu
     syscall
 
-    # Vai para o fim do programa
-    j fim
+    # Vai para o menu do programa
+    j menu 
 
 num_maior:
     li $v0, 4
@@ -84,8 +90,81 @@ ganhou:
     li $v0, 4
     la $a0, venceu
     syscall
+    
+    # Salva melhor pontuação
+    beq $t5, $zero, registra
+    blt $t7, $t5, registra
 
-    j fim
+    # Volta para o menu.
+    j menu 
+
+registra:
+    move $t5, $t7
+    j menu
+
+menu:
+    li $t7, 0 # Inicia as tentativas com 0 chutes
+
+    # Pinrta dodas as linhas do menu
+    li $v0, 4
+    la $a0, menu_1 
+    syscall
+    la $a0, menu_2 
+    syscall
+    
+    # Se o $5 == 0 escreve - (menu_init) se não escre a pontuação (menu_pont)
+    beq $t5, $zero, menu_init
+    j menu_pont
+
+menu_op:
+    # Escreve opções
+    li $v0, 4
+    la $a0, menu_3
+    syscall
+    la $a0, menu_4
+    syscall
+    la $a0, menu_5
+    syscall
+
+    # Le opção
+    li $v0, 5
+    syscall
+
+    beq $v0, $zero, fim
+    
+    # Imprime mgs na tela
+	li $v0, 4
+	la $a0, msg
+	syscall
+
+    # 
+
+    
+    jal rand_num
+    j loop
+
+menu_init:
+    # Escreve '-' já que não teve jogo anterior
+    li $v0, 4
+    la $a0, menu_0
+    syscall
+    
+    # Continua para o menu
+    j menu_op
+
+menu_pont:
+    # Escreve a melhor pontuação
+    li $v0, 1
+    move $a0, $t5
+    syscall
+    
+    # Nova linha
+    li $v0, 4
+    la $a0, menu_n
+    syscall
+
+    # Continua para o menu
+    j menu_op
 
 fim:
     # Fecha o programa
