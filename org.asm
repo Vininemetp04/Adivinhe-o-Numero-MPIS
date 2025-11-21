@@ -41,66 +41,9 @@ rand_num:
     # Volta para onde chamou
     jr $ra
 
-loop:
-    lb $t8, max # Coloca o MAX de tentativa no t8
-    beq $t7, $t8, perdeu_bl # Caso t7 seja igual a t8, ou seja já usou as tetativas vai para o bloco perdeu_bl
-
-    addi $t7, $t7, 1 # Incremento do t7 (controlador de tetativas)
-    
-    # Printa a mensagem de chute
-    li $v0, 4   
-    la $a0, chute
-	syscall
-    
-    # Le o chute
-    li $v0, 5
-    syscall
-    
-    beq $v0, $t9, ganhou
-    blt $v0, $t9, num_menor
-    bgt $v0, $t9, num_maior
-
-    j loop 
-
-perdeu_bl:
-    # Printa a mensagem de Perdeu
-    li $v0, 4
-    la $a0, perdeu
-    syscall
-
-    # Vai para o menu do programa
-    j menu 
-
-num_maior:
-    li $v0, 4
-    la $a0, maior
-    syscall
-
-    j loop
-
-num_menor:
-    li $v0, 4
-    la $a0, menor
-    syscall
-
-    j loop
-
-ganhou:
-    # Imprime a mensagem de comemoração
-    li $v0, 4
-    la $a0, venceu
-    syscall
-    
-    # Salva melhor pontuação
-    beq $t5, $zero, registra
-    blt $t7, $t5, registra
-
-    # Volta para o menu.
-    j menu 
-
-registra:
-    move $t5, $t7
-    j menu
+#
+# Blocos do menu
+#
 
 menu:
     li $t7, 0 # Inicia as tentativas com 0 chutes
@@ -136,9 +79,6 @@ menu_op:
 	li $v0, 4
 	la $a0, msg
 	syscall
-
-    # 
-
     
     jal rand_num
     j loop
@@ -165,6 +105,75 @@ menu_pont:
 
     # Continua para o menu
     j menu_op
+
+#
+# Blocos do jogo
+#
+
+loop:
+    lb $t8, max # Coloca o MAX de tentativa no t8
+    beq $t7, $t8, perdeu_bl # Caso t7 seja igual a t8, ou seja já usou as tetativas vai para o bloco perdeu_bl
+
+    addi $t7, $t7, 1 # Incremento do t7 (controlador de tetativas)
+    
+    # Printa a mensagem de chute
+    li $v0, 4   
+    la $a0, chute
+	syscall
+    
+    # Le o chute
+    li $v0, 5
+    syscall
+   
+    # Condições 
+    beq $v0, $t9, ganhou    # Acertou o número
+    blt $v0, $t9, num_menor # Chutou um número menor
+    bgt $v0, $t9, num_maior # Chutou um número MAIOR
+
+    j loop 
+
+num_maior:
+    # Escreve que o chute foi MAIOR
+    li $v0, 4
+    la $a0, maior
+    syscall
+
+    j loop
+
+num_menor:
+    # Escreve q o chute foi menor
+    li $v0, 4
+    la $a0, menor
+    syscall
+
+    j loop
+
+ganhou:
+    # Imprime a mensagem de comemoração
+    li $v0, 4
+    la $a0, venceu
+    syscall
+    
+    # Salva melhor pontuação (menor número de chutes)
+    beq $t5, $zero, registra
+    blt $t7, $t5, registra
+
+    # Volta para o menu.
+    j menu 
+
+registra:
+    # Registra a melhor pontuação
+    move $t5, $t7
+    j menu
+
+perdeu_bl:
+    # Printa a mensagem de Perdeu
+    li $v0, 4
+    la $a0, perdeu
+    syscall
+
+    # Vai para o menu do programa
+    j menu 
 
 fim:
     # Fecha o programa
